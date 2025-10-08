@@ -4,7 +4,6 @@ import 'package:me_mpr/screens/signup_page.dart';
 import 'package:me_mpr/services/auth_service.dart';
 import 'package:me_mpr/utils.dart';
 import 'package:me_mpr/widgets/custom_text_field.dart';
-import 'package:me_mpr/widgets/other_signin.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -195,7 +194,6 @@ class _LoginPageState extends State<LoginPage> {
                         ),
 
                         SizedBox(height: height * 0.035),
-                        OtherSignin(),
                         Spacer(),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 25),

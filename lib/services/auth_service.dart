@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:me_mpr/failure/auth_result.dart';
 import 'package:me_mpr/failure/failure.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -64,37 +63,6 @@ class AuthService {
       return Left(AppFailure(e.message.toString()));
     } catch (e) {
       return Left(AppFailure('Unknown error: $e'));
-    }
-  }
-
-  Future<Either<AppFailure, AuthResult>> signInWithGoogle() async {
-    try {
-      _googleSignIn.initialize(serverClientId: dotenv.env['SERVER_CLIENT_ID']);
-
-      final googleUser = await _googleSignIn.authenticate();
-
-      // ignore: unnecessary_null_comparison
-      if (googleUser == null) {
-        return Left(AppFailure("Google Sign-In aborted by user"));
-      }
-
-      final googleAuth = googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-
-      final result = await _auth.signInWithCredential(credential);
-
-      if (result.user != null) {
-        final isNewUser = result.additionalUserInfo?.isNewUser ?? false;
-        return Right(AuthResult(user: result.user!, isNewUser: isNewUser));
-      }
-      return Left(AppFailure("Failed to retrieve user from Google sign-in"));
-    } on FirebaseAuthException catch (e) {
-      return Left(AppFailure("FirebaseAuth error: ${e.message}"));
-    } catch (e) {
-      return Left(AppFailure("Unexpected error: $e"));
     }
   }
 
