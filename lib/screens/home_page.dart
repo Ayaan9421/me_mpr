@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:me_mpr/screens/chat_screen.dart';
+import 'package:me_mpr/screens/daily_diaries_page.dart';
 import 'package:me_mpr/utils/app_colors.dart';
+import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,25 +13,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex =
-      0; // 0 for Home, 1 for Stats, 2 for Notifs, 3 for Profile
+  int _selectedIndex = 0; // 0 for Home, 1 for Diaries, 2 for Calls, 3 for SOS
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // Placeholder for navigation or other actions
+    // Placeholder for future navigation
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get colors from the theme for consistency
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        // Properties are now set by the global theme in main.dart
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -38,47 +36,31 @@ class _HomePageState extends State<HomePage> {
         ),
         title: const Text('MindEase'),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onSelected: (value) async {
-              switch (value) {
-                case 'logout':
-                  await FirebaseAuth.instance.signOut();
-                  break;
-                case 'settings':
-                  // Navigate to settings page
-                  break;
-                case 'update_profile':
-                  // Navigate to profile page
-                  break;
-              }
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined, size: 28),
+            onPressed: () {
+              // Simple dialog to show profile options
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Profile'),
+                  content: const Text('Profile options would go here.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => FirebaseAuth.instance.signOut(),
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              );
             },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: ListTile(
-                  leading: Icon(Icons.logout, color: AppColors.error),
-                  title: Text('Logout'),
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: 'settings',
-                child: ListTile(
-                  leading: Icon(Icons.settings, color: AppColors.secondaryText),
-                  title: Text('Settings'),
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: 'update_profile',
-                child: ListTile(
-                  leading: Icon(Icons.edit, color: AppColors.accentYellow),
-                  title: Text('Update Profile'),
-                ),
-              ),
-            ],
           ),
           const SizedBox(width: 8),
         ],
@@ -117,141 +99,95 @@ class _HomePageState extends State<HomePage> {
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                20,
-                16,
-                120,
-              ), // Padding for FABs
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildMoodTracker(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('Daily Diaries'),
+                  const SizedBox(height: 12),
                   _buildDailyDairies(),
-                  const SizedBox(height: 24),
+                  _buildSectionHeader('Recent Calls'),
+                  const SizedBox(height: 12),
                   _buildCalls(),
-                  const SizedBox(height: 24),
-                  _buildBlogsSection(),
-                  const SizedBox(height: 24),
-                  _buildSosSection(),
                 ],
               ),
             ),
           ),
-          // 💬 Chatbot FAB (fixed bottom-right)
+          // --- AI Chat FAB ---
           Positioned(
             bottom: 40,
             right: 16,
             child: FloatingActionButton(
               onPressed: () {
-                // Navigate to the ChatScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ChatScreen()),
                 );
               },
-              // Color is from global theme
-              child: const Icon(
-                Icons.chat_bubble,
-                color: Colors.white,
-                size: 26,
-              ),
+              backgroundColor: colorScheme.secondary,
+              child: const Icon(Icons.chat_bubble, color: Colors.white),
             ),
           ),
         ],
       ),
+      // --- Center "Add" FAB ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Add new journal entry
+          // Handle new entry action
         },
-        backgroundColor: colorScheme.primary, // Use primary accent (teal)
-        elevation: 6,
+        backgroundColor: colorScheme.primary, // Teal color
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                icon: Icons.home_filled,
-                index: 0,
-                colorScheme: colorScheme,
-              ),
-              _buildNavItem(
-                icon: Icons.bar_chart,
-                index: 1,
-                colorScheme: colorScheme,
-              ),
-              const SizedBox(width: 48), // space for FAB
-              _buildNavItem(
-                icon: Icons.notifications_none,
-                index: 2,
-                colorScheme: colorScheme,
-              ),
-              _buildNavItem(
-                icon: Icons.person_outline,
-                index: 3,
-                colorScheme: colorScheme,
-              ),
-            ],
-          ),
-        ),
+      // --- Using the new reusable Bottom App Bar ---
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
     );
   }
 
-  // Helper for BottomAppBar items to reduce repetition
-  Widget _buildNavItem({
-    required IconData icon,
-    required int index,
-    required ColorScheme colorScheme,
-  }) {
-    final isSelected = _selectedIndex == index;
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: isSelected ? colorScheme.primary : AppColors.secondaryText,
-        size: isSelected ? 30 : 28,
+  // Reusable header for sections like "Daily Diaries"
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: AppColors.primaryText,
       ),
-      onPressed: () => _onItemTapped(index),
     );
   }
 
-  // 🌤 Mood Tracker
+  // 🌤 Mood Tracker (Updated UI)
   Widget _buildMoodTracker() {
     return Card(
-      // Uses global CardTheme
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Mood',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryText,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Mood',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      '5-day streak',
-                      style: TextStyle(color: AppColors.secondaryText),
-                    ),
-                  ],
+                      SizedBox(height: 6),
+                      Text(
+                        '5-day streak',
+                        style: TextStyle(color: AppColors.secondaryText),
+                      ),
+                    ],
+                  ),
                 ),
                 const Text('😊', style: TextStyle(fontSize: 40)),
               ],
@@ -263,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                   .map(
                     (day) => CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColors.moodGood,
+                      backgroundColor: AppColors.moodGood.withOpacity(0.7),
                       child: Text(
                         day,
                         style: const TextStyle(
@@ -282,148 +218,153 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 📔 Daily Diaries
+  // 📔 Daily Diaries (Updated UI with navigation)
   Widget _buildDailyDairies() {
-    return _buildSectionCard(
-      title: 'Daily Diaries',
-      icon: Icons.menu_book_rounded,
+    return Column(
       children: [
-        _buildDiaryEntry('😄', 'Great Day!', 'Oct 09, 2:30 PM'),
-        _buildDiaryEntry('😐', 'A bit stressed', 'Oct 08, 9:00 AM'),
+        _buildDiaryEntry(
+          '😄',
+          'Had a Great Day!',
+          'Oct 09, 2:30 PM',
+          isReversed: false,
+        ),
+        const SizedBox(height: 12),
+        _buildDiaryEntry(
+          '😐',
+          'A bit stressed today',
+          'Oct 08, 9:00 AM',
+          isReversed: true,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => DailyDairiesPage()),
+              );
+            },
+            child: const Text('View more'),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildDiaryEntry(String emoji, String title, String time) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Text(emoji, style: const TextStyle(fontSize: 26)),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-      ),
-      subtitle: Text(
-        time,
-        style: const TextStyle(color: AppColors.secondaryText),
-      ),
-      trailing: const Icon(
-        Icons.arrow_forward_ios,
-        size: 14,
-        color: AppColors.secondaryText,
-      ),
-      onTap: () {},
-    );
-  }
-
-  // ☎️ Calls
+  // ☎️ Calls (Updated UI)
   Widget _buildCalls() {
-    return _buildSectionCard(
-      title: 'Recent Calls',
-      icon: Icons.call_rounded,
+    return Column(
       children: [
-        _buildCallEntry('😊', 'Dr. Smith', 'Yesterday, 4:00 PM', '15 min'),
-        _buildCallEntry('😟', 'Support Line', 'Oct 06, 11:20 AM', '25 min'),
+        _buildCallEntry(
+          '😊',
+          'Dr. Smith',
+          'Yesterday, 4:00 PM',
+          '15 min',
+          isReversed: false,
+        ),
+        const SizedBox(height: 12),
+        _buildCallEntry(
+          '😟',
+          'Support Line',
+          'Oct 06, 11:20 AM',
+          '25 min',
+          isReversed: true,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              /* Navigate to full call log */
+            },
+            child: const Text('View more'),
+          ),
+        ),
       ],
     );
   }
 
+  // Reusable card for diary entries on the home page (with spacing fix)
+  Widget _buildDiaryEntry(
+    String emoji,
+    String title,
+    String time, {
+    bool isReversed = false,
+  }) {
+    final emojiWidget = Text(emoji, style: const TextStyle(fontSize: 32));
+    final detailsWidget = Column(
+      crossAxisAlignment: isReversed
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        const SizedBox(height: 4),
+        Text(time, style: const TextStyle(color: AppColors.secondaryText)),
+      ],
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: isReversed
+              ? [
+                  Expanded(child: detailsWidget),
+                  const SizedBox(width: 16),
+                  emojiWidget,
+                ]
+              : [
+                  emojiWidget,
+                  const SizedBox(width: 16),
+                  Expanded(child: detailsWidget),
+                ],
+        ),
+      ),
+    );
+  }
+
+  // Reusable card for call entries on the home page (with spacing fix)
   Widget _buildCallEntry(
     String emoji,
     String caller,
     String time,
-    String duration,
-  ) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Text(emoji, style: const TextStyle(fontSize: 26)),
-      title: Text(
-        caller,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-      ),
-      subtitle: Text(
-        '$time  •  $duration',
-        style: const TextStyle(color: AppColors.secondaryText),
-      ),
-      trailing: const Icon(Icons.call, color: AppColors.moodGood),
-      onTap: () {},
-    );
-  }
-
-  // 📰 Blogs & 🚨 SOS Sections
-  Widget _buildBlogsSection() => _buildSectionCard(
-    title: 'Mindfulness Blogs',
-    icon: Icons.article_outlined,
-    children: [
-      Container(
-        height: 120,
-        alignment: Alignment.center,
-        child: const Text(
-          '✨ “A calm mind brings inner strength.” ✨',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: AppColors.secondaryText,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildSosSection() => _buildSectionCard(
-    title: 'Emergency Contacts',
-    icon: Icons.emergency_rounded,
-    children: [
-      Container(
-        height: 100,
-        alignment: Alignment.center,
-        child: const Text(
-          '📞 24x7 Support: 1800-123-HELP',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ),
-    ],
-  );
-
-  // 🔹 Reusable Section Builder
-  Widget _buildSectionCard({
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
+    String duration, {
+    bool isReversed = false,
   }) {
+    final emojiWidget = Text(emoji, style: const TextStyle(fontSize: 32));
+    final detailsWidget = Column(
+      crossAxisAlignment: isReversed
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        Text(
+          caller,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$time  •  $duration',
+          style: const TextStyle(color: AppColors.secondaryText),
+        ),
+      ],
+    );
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  color: Theme.of(context).colorScheme.primary,
-                ), // Use theme color
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryText,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...children,
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {},
-                child: const Text('View more'),
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: isReversed
+              ? [
+                  Expanded(child: detailsWidget),
+                  const SizedBox(width: 16),
+                  emojiWidget,
+                ]
+              : [
+                  emojiWidget,
+                  const SizedBox(width: 16),
+                  Expanded(child: detailsWidget),
+                ],
         ),
       ),
     );
