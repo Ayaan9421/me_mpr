@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:me_mpr/failure/depression_report.dart';
 import 'package:me_mpr/failure/diary_entry.dart';
+import 'package:me_mpr/screens/voice_recorder_view.dart';
+import 'package:me_mpr/services/audio_recorder_service.dart';
 import 'package:me_mpr/services/diary_analysis_service.dart';
 import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/app_colors.dart';
@@ -21,20 +23,62 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
   final _contentController = TextEditingController();
   final _analysisService = DiaryAnalysisService();
   final _storageService = DiaryStorageService();
+  final _recorderService = AudioRecorderService(); // Instance of the recorder
 
   bool _isLoading = false;
   DepressionReport? _analysisReport;
+  bool _diaryWasSaved = false;
 
   @override
   void initState() {
     super.initState();
+    _recorderService.init(); // Initialize the recorder service
     _contentController.addListener(() {
       setState(() {}); // To update character count
     });
   }
 
-  Future<void> _saveAndAnalyzeDiary() async {
-    if (_contentController.text.trim().isEmpty) {
+  // --- NEW: Handle audio recording and analysis ---
+  Future<void> _startVoiceRecording() async {
+    final filePath = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => VoiceRecorderView(recorderService: _recorderService),
+    );
+
+    if (filePath != null) {
+      setState(() => _isLoading = true);
+      try {
+        final report = await _analysisService.analyzeAudio(filePath);
+
+        // Use the transcript from the report as the diary content
+        _contentController.text =
+            report.transcript ?? 'No transcription available.';
+        _titleController.text =
+            'Voice Journal - ${DateFormat.yMMMd().format(DateTime.now())}';
+
+        // Save and show analysis
+        await _saveAndAnalyze(isVoice: true, audioReport: report);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Analysis failed: ${e.toString()}')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
+  // --- Updated to handle both text and voice ---
+  Future<void> _saveAndAnalyze({
+    bool isVoice = false,
+    DepressionReport? audioReport,
+  }) async {
+    if (!isVoice && _contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please write something in your diary to save.'),
@@ -43,17 +87,14 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // 1. Get analysis from the API
-      final report = await _analysisService.analyzeText(
-        _contentController.text,
-      );
+      // Use the pre-analyzed audio report or get a new one for text
+      final report =
+          audioReport ??
+          await _analysisService.analyzeText(_contentController.text);
 
-      // 2. Create a complete DiaryEntry object with the analysis summary
       final newEntry = DiaryEntry(
         title: _titleController.text.isNotEmpty
             ? _titleController.text
@@ -61,15 +102,14 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
         content: _contentController.text,
         dateTime: DateTime.now(),
         emoji: _getEmojiForScore(report.depressionScore),
-        analysis: report.description, // Save the summary
+        report: report,
       );
 
-      // 3. Save the complete entry to local storage
       await _storageService.saveDiary(newEntry);
 
-      // 4. Update the UI to show the analysis report
       setState(() {
         _analysisReport = report;
+        _diaryWasSaved = true;
       });
     } catch (e) {
       print(e.toString());
@@ -77,57 +117,57 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
         SnackBar(content: Text('An error occurred: ${e.toString()}')),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   String _getEmojiForScore(int score) {
-    if (score <= 3) return '😊'; // Low score
-    if (score <= 6) return '😐'; // Medium score
-    return '😔'; // High score
+    if (score <= 3) return '😊';
+    if (score <= 6) return '😐';
+    return '😔';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _analysisReport == null ? 'Create Diary' : 'Diary Analysis',
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Navigator.of(context).pop(_diaryWasSaved);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            _analysisReport == null ? 'Create Diary' : 'Diary Analysis',
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(_diaryWasSaved),
+          ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        body: _isLoading
+            ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Analyzing your entry...'),
+                  ],
+                ),
+              )
+            : _analysisReport != null
+            ? _buildAnalysisView()
+            : _buildEditorView(),
+        floatingActionButton: _analysisReport == null
+            ? FloatingActionButton(
+                onPressed: _startVoiceRecording, // <-- Connect to new function
+                child: const Icon(Icons.mic, color: Colors.white),
+              )
+            : null,
       ),
-      body: _isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Analyzing your entry...'),
-                ],
-              ),
-            )
-          : _analysisReport != null
-          ? _buildAnalysisView()
-          : _buildEditorView(),
-      floatingActionButton: _analysisReport == null
-          ? FloatingActionButton(
-              onPressed: () {
-                // Placeholder for voice recording
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Voice recording not implemented yet.'),
-                  ),
-                );
-              },
-              child: const Icon(Icons.mic, color: Colors.white),
-            )
-          : null,
     );
   }
 
@@ -173,13 +213,13 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
             ),
           ),
         ),
-        // --- Save Button ---
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _saveAndAnalyzeDiary,
+              onPressed: () =>
+                  _saveAndAnalyze(), // Call without parameters for text
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 textStyle: const TextStyle(
@@ -233,6 +273,7 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _recorderService.dispose(); // Dispose the recorder
     super.dispose();
   }
 }

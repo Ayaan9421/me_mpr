@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:me_mpr/failure/diary_entry.dart';
 import 'package:me_mpr/screens/call_analysis_page.dart';
 import 'package:me_mpr/screens/chat_screen.dart';
 import 'package:me_mpr/screens/create_diary_page.dart';
 import 'package:me_mpr/screens/daily_diaries_page.dart';
+import 'package:me_mpr/screens/diary_detail_page.dart';
+import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/app_colors.dart';
+import 'package:me_mpr/utils/utils.dart';
 import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,13 +21,40 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final DiaryStorageService _storageService = DiaryStorageService();
+  late Future<List<DiaryEntry>> _diariesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _diariesFuture = _storageService.getDiaries();
+  }
+
+  void _refreshDiaries() {
+    setState(() {
+      _diariesFuture = _storageService.getDiaries();
+    });
+  }
 
   void _onItemTapped(int index) {
-    if (index == 2) {
+    if (index == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DailyDairiesPage()),
+      );
+    } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
       );
+    } else if (index == 3) {
+      // Profile or Settings Page
+      showSnackBar(context, "SOS coming soon!");
     } else {
       setState(() => _selectedIndex = index);
     }
@@ -54,8 +86,11 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.account_circle_outlined,
-                size: 28, color: Colors.black87),
+            icon: const Icon(
+              Icons.account_circle_outlined,
+              size: 28,
+              color: Colors.black87,
+            ),
             onPressed: () {
               showDialog(
                 context: context,
@@ -97,7 +132,7 @@ class _HomePageState extends State<HomePage> {
                   _buildSectionHeader('✨ Daily Diaries'),
                   const SizedBox(height: 12),
                   _buildDailyDairies(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
                   _buildSectionHeader('📞 Recent Calls'),
                   const SizedBox(height: 12),
                   _buildCalls(),
@@ -174,7 +209,9 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
+                MaterialPageRoute(
+                  builder: (context) => const CallAnalysisPage(),
+                ),
               );
             },
           ),
@@ -281,24 +318,75 @@ class _HomePageState extends State<HomePage> {
 
   // 📔 Daily Diaries Section
   Widget _buildDailyDairies() {
-    return Column(
-      children: [
-        _buildDiaryEntry('😄', 'Had a Great Day!', 'Oct 09, 2:30 PM'),
-        const SizedBox(height: 12),
-        _buildDiaryEntry('😐', 'A bit stressed today', 'Oct 08, 9:00 AM'),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => DailyDairiesPage()),
+    return FutureBuilder<List<DiaryEntry>>(
+      future: _diariesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Could not load diaries.'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            alignment: Alignment.center,
+            child: const Text(
+              'No recent diaries. Tap "+" to create one!',
+              style: TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        // Take the 2 most recent diaries
+        final recentDiaries = snapshot.data!.take(3).toList();
+
+        return Column(
+          children: [
+            ...recentDiaries.map((entry) {
+              return InkWell(
+                onTap: () =>
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DiaryDetailPage(entry: entry),
+                      ),
+                    ).then((_) {
+                      // Refresh diaries when returning
+                      _refreshDiaries();
+                    }),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: _buildDiaryEntry(
+                    entry.emoji,
+                    entry.title,
+                    // Format the date nicely
+                    DateFormat('MMM dd, h:mm a').format(entry.dateTime),
+                  ),
+                ),
               );
-            },
-            child: const Text('View more →'),
-          ),
-        ),
-      ],
+            }).toList(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () async {
+                  // Await result and refresh if a diary was deleted
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DailyDairiesPage(),
+                    ),
+                  );
+                  if (result == true && mounted) {
+                    _refreshDiaries();
+                  }
+                },
+                child: const Text('View more →'),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -332,13 +420,17 @@ class _HomePageState extends State<HomePage> {
         _buildCallEntry('😊', 'Dr. Smith', 'Yesterday, 4:00 PM', '15 min'),
         const SizedBox(height: 12),
         _buildCallEntry('😟', 'Support Line', 'Oct 06, 11:20 AM', '25 min'),
+        const SizedBox(height: 12),
+        _buildCallEntry('😟', 'Aayush', 'Oct 06, 11:20 AM', '25 min'),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
+                MaterialPageRoute(
+                  builder: (context) => const CallAnalysisPage(),
+                ),
               );
             },
             child: const Text('View more →'),
@@ -349,7 +441,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCallEntry(
-      String emoji, String caller, String time, String duration) {
+    String emoji,
+    String caller,
+    String time,
+    String duration,
+  ) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
@@ -372,13 +468,19 @@ class _HomePageState extends State<HomePage> {
         ),
         child: ListTile(
           leading: Text(emoji, style: const TextStyle(fontSize: 30)),
-          title: Text(caller,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-          subtitle: Text('$time  •  $duration',
-              style: const TextStyle(color: Colors.grey)),
-          trailing: const Icon(Icons.chevron_right_rounded,
-              color: Colors.grey, size: 26),
+          title: Text(
+            caller,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          ),
+          subtitle: Text(
+            '$time  •  $duration',
+            style: const TextStyle(color: Colors.grey),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.grey,
+            size: 26,
+          ),
         ),
       ),
     );

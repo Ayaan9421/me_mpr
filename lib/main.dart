@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:me_mpr/utils/app_colors.dart';
-import 'package:me_mpr/auth/auth_gate.dart';   
+import 'package:me_mpr/auth/auth_gate.dart';
 
-import 'firebase_options.dart'; 
-import 'package:me_mpr/screens/call_analysis_page.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,8 +87,8 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-// In lib/main.dart's build method
-home: const AuthGate(), // Temporarily set this for testing
+      // In lib/main.dart's build method
+      home: const AuthGate(), // Temporarily set this for testing
     );
   }
 }

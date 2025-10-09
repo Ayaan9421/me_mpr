@@ -1,4 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:me_mpr/screens/chat_screen.dart';
+import 'package:me_mpr/screens/daily_diaries_page.dart';
+import 'package:me_mpr/screens/home_page.dart';
+import 'package:me_mpr/utils/utils.dart';
+import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:me_mpr/failure/diary_entry.dart';
+import 'package:me_mpr/screens/call_analysis_page.dart';
+import 'package:me_mpr/screens/chat_screen.dart';
+import 'package:me_mpr/screens/create_diary_page.dart';
+import 'package:me_mpr/screens/daily_diaries_page.dart';
+import 'package:me_mpr/services/diary_storage_service.dart';
+import 'package:me_mpr/utils/app_colors.dart';
+import 'package:me_mpr/utils/utils.dart';
+import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
 
 class CallAnalysisPage extends StatefulWidget {
   const CallAnalysisPage({super.key});
@@ -11,15 +28,30 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
   static const Color backgroundColor = Color(0xFFF1F8E9);
   static const Color fabColor = Color(0xFFFFC107);
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Tapped on button index: $index')),
-    );
+    if (index == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DailyDairiesPage()),
+      );
+    } else if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
+      );
+    } else if (index == 3) {
+      // Profile or Settings Page
+      showSnackBar(context, "SOS coming soon!");
+    } else {
+      setState(() => _selectedIndex = index);
+    }
   }
 
   // Predefined analysis data for variety
@@ -31,8 +63,8 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
       'insights': [
         'The user sounded relaxed and thankful.',
         'Good engagement throughout the call.',
-        'Keywords: “helpful”, “better”, “thanks”.'
-      ]
+        'Keywords: “helpful”, “better”, “thanks”.',
+      ],
     },
     {
       'positive': 0.6,
@@ -41,8 +73,8 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
       'insights': [
         'The tone was polite but slightly uncertain.',
         'Some hesitation detected in responses.',
-        'Keywords: “maybe”, “try”, “okay”.'
-      ]
+        'Keywords: “maybe”, “try”, “okay”.',
+      ],
     },
     {
       'positive': 0.5,
@@ -51,8 +83,8 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
       'insights': [
         'Conversation contained mixed emotions.',
         'User mentioned stress multiple times.',
-        'Keywords: “stress”, “tired”, “busy”.'
-      ]
+        'Keywords: “stress”, “tired”, “busy”.',
+      ],
     },
     {
       'positive': 0.9,
@@ -61,13 +93,15 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
       'insights': [
         'Very positive and uplifting conversation.',
         'User expressed satisfaction and happiness.',
-        'Keywords: “awesome”, “grateful”, “amazing”.'
-      ]
+        'Keywords: “awesome”, “grateful”, “amazing”.',
+      ],
     },
   ];
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -79,10 +113,7 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
         ),
         title: const Text(
           'Call Analysis',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -114,80 +145,48 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
 
           // 💬 Chatbot Floating Button
           Positioned(
-            bottom: 80,
+            bottom: 40,
             right: 16,
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Chatbot clicked!")),
-                );
-              },
-              backgroundColor: fabColor,
-              icon: const Icon(Icons.chat_bubble, color: Colors.white),
-              label: const Text('Chat', style: TextStyle(color: Colors.white)),
+            child: FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChatScreen()),
+              ),
+              backgroundColor: const Color(0xFF4F8EF7),
+              child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
             ),
           ),
         ],
       ),
 
       floatingActionButton: FloatingActionButton(
+        backgroundColor: colorScheme.primary,
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("New journal entry clicked!")),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateDiaryPage()),
           );
         },
-        backgroundColor: const Color(0xFF009688),
-        elevation: 6,
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        color: Colors.white,
-        elevation: 8,
-        notchMargin: 8.0,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              IconButton(
-                icon: Icon(Icons.home,
-                    color: _selectedIndex == 0 ? Colors.teal : Colors.grey),
-                onPressed: () => _onItemTapped(0),
-              ),
-              IconButton(
-                icon: Icon(Icons.bar_chart,
-                    color: _selectedIndex == 1 ? Colors.teal : Colors.grey),
-                onPressed: () => _onItemTapped(1),
-              ),
-              const SizedBox(width: 48),
-              IconButton(
-                icon: Icon(Icons.phone,
-                    color: _selectedIndex == 2 ? Colors.teal : Colors.grey),
-                onPressed: () => _onItemTapped(2),
-              ),
-              IconButton(
-                icon: Icon(Icons.person_outline,
-                    color: _selectedIndex == 3 ? Colors.teal : Colors.grey),
-                onPressed: () => _onItemTapped(3),
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
     );
   }
 
   Widget _buildCallAnalysisCard(
-      String caller,
-      String date,
-      String duration,
-      double positive,
-      double neutral,
-      double negative,
-      List<String> insights) {
+    String caller,
+    String date,
+    String duration,
+    double positive,
+    double neutral,
+    double negative,
+    List<String> insights,
+  ) {
     return Card(
       elevation: 3,
       shadowColor: Colors.black12,
@@ -198,12 +197,15 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(caller,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              caller,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
-            Text('$date  •  $duration',
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            Text(
+              '$date  •  $duration',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
             const SizedBox(height: 12),
 
             // The "Call Analysis" button
@@ -279,10 +281,7 @@ class CallDetailPage extends StatelessWidget {
         elevation: 2,
         title: const Text(
           'Detailed Call Analysis',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -293,65 +292,88 @@ class CallDetailPage extends StatelessWidget {
 
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🧾 Call Summary
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Caller: $caller', style: const TextStyle(fontSize: 18)),
-                    Text('Date: $date', style: const TextStyle(fontSize: 16, color: Colors.grey)),
-                    Text('Duration: $duration', style: const TextStyle(fontSize: 16, color: Colors.grey)),
-                  ],
+        child: Container(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 🧾 Call Summary
+              Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            const Text(
-              'Call Sentiment Overview',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildProgressBar('Positive', positive, Colors.green),
-            _buildProgressBar('Neutral', neutral, Colors.orange),
-            _buildProgressBar('Negative', negative, Colors.red),
-
-            const SizedBox(height: 30),
-
-            const Text(
-              'Key Insights',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            ...insights.map(_buildInsightTile).toList(),
-
-            const Spacer(),
-
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Caller: $caller',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      Text(
+                        'Date: $date',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        'Duration: $duration',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                label: const Text(
-                  "Back",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                'Call Sentiment Overview',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              _buildProgressBar('Positive', positive, Colors.green),
+              _buildProgressBar('Neutral', neutral, Colors.orange),
+              _buildProgressBar('Negative', negative, Colors.red),
+
+              const SizedBox(height: 30),
+
+              const Text(
+                'Key Insights',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...insights.map(_buildInsightTile).toList(),
+
+              const Spacer(),
+
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  label: const Text(
+                    "Back",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -363,9 +385,10 @@ class CallDetailPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 4),
           LinearProgressIndicator(
             value: value,

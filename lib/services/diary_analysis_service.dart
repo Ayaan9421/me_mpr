@@ -28,11 +28,11 @@ class DiaryAnalysisService {
     }
   }
 
-  // Method to analyze an audio file
+  // --- NEW METHOD FOR AUDIO ANALYSIS ---
   Future<DepressionReport> analyzeAudio(String filePath) async {
     final url = Uri.parse('$_baseUrl/analyze');
     try {
-      var request = http.MultipartRequest('POST', url);
+      final request = http.MultipartRequest('POST', url);
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
 
       final streamedResponse = await request.send();
@@ -41,6 +41,8 @@ class DiaryAnalysisService {
       if (response.statusCode == 200) {
         return DepressionReport.fromJson(json.decode(response.body));
       } else {
+        final errorBody = json.decode(response.body);
+        print('Error from server: $errorBody');
         throw Exception(
           'Failed to analyze audio. Status code: ${response.statusCode}',
         );

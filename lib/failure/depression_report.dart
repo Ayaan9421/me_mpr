@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-// Helper function to decode the JSON string if necessary
 DepressionReport depressionReportFromJson(String str) {
   final jsonData = json.decode(str);
   return DepressionReport.fromJson(jsonData);
@@ -23,17 +22,30 @@ class DepressionReport {
     required this.emotions,
   });
 
-  factory DepressionReport.fromJson(Map<String, dynamic> json) =>
-      DepressionReport(
-        transcript: json["transcript"],
-        depressionScore: json["depression_score"],
-        description: json["description"],
-        risks: List<String>.from(json["risks"].map((x) => x)),
-        advice: List<String>.from(json["advice"].map((x) => x)),
-        emotions: List<EmotionDetail>.from(
-          json["emotions"].map((x) => EmotionDetail.fromJson(x)),
-        ),
-      );
+  factory DepressionReport.fromJson(Map<String, dynamic> json) {
+    return DepressionReport(
+      transcript: json["transcript"],
+      depressionScore: json["depression_score"],
+      description: json["description"],
+      risks: (json["risks"] as List?)?.map((x) => x.toString()).toList() ?? [],
+      advice:
+          (json["advice"] as List?)?.map((x) => x.toString()).toList() ?? [],
+      emotions:
+          (json["emotions"] as List?)
+              ?.map((x) => EmotionDetail.fromJson(x))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "transcript": transcript,
+    "depression_score": depressionScore,
+    "description": description,
+    "risks": risks,
+    "advice": advice,
+    "emotions": emotions.map((x) => x.toJson()).toList(),
+  };
 }
 
 class EmotionDetail {
@@ -42,6 +54,10 @@ class EmotionDetail {
 
   EmotionDetail({required this.label, required this.score});
 
-  factory EmotionDetail.fromJson(Map<String, dynamic> json) =>
-      EmotionDetail(label: json["label"], score: json["score"]?.toDouble());
+  factory EmotionDetail.fromJson(Map<String, dynamic> json) => EmotionDetail(
+    label: json["label"] ?? "",
+    score: (json["score"] ?? 0).toDouble(),
+  );
+
+  Map<String, dynamic> toJson() => {"label": label, "score": score};
 }

@@ -26,4 +26,15 @@ class DiaryStorageService {
     }
     return [];
   }
+
+  Future<void> deleteDiary(DateTime diaryId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<DiaryEntry> diaries = await getDiaries();
+
+    // Remove the diary that matches the unique dateTime
+    diaries.removeWhere((entry) => entry.dateTime == diaryId);
+
+    // Save the updated list
+    await prefs.setString(_diariesKey, diaryEntryToJson(diaries));
+  }
 }
