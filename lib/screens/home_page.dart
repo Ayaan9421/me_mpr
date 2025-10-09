@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:me_mpr/screens/chat_screen.dart';
+import 'package:me_mpr/screens/create_diary_page.dart';
 import 'package:me_mpr/screens/daily_diaries_page.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
@@ -135,7 +136,11 @@ class _HomePageState extends State<HomePage> {
       // --- Center "Add" FAB ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Handle new entry action
+          // Navigate to the Create Diary Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateDiaryPage()),
+          );
         },
         backgroundColor: colorScheme.primary, // Teal color
         child: const Icon(Icons.add, color: Colors.white, size: 30),

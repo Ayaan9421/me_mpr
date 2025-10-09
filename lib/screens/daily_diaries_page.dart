@@ -1,59 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:me_mpr/failure/diary_entry.dart';
+import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/widgets/dairy_entry_card.dart';
 
-class DailyDairiesPage extends StatelessWidget {
-  DailyDairiesPage({super.key});
+class DailyDairiesPage extends StatefulWidget {
+  const DailyDairiesPage({super.key});
 
-  // --- Mock Data for display ---
-  final List<DiaryEntry> _diaryEntries = [
-    DiaryEntry(
-      emoji: '😄',
-      title: 'A Fantastic Day!',
-      dateTime: DateTime.parse('2025-10-09T14:30:00Z'),
-      analysis:
-          'Today was filled with positive moments. You mentioned feeling accomplished after finishing your project, which suggests a strong sense of pride and competence. Keep embracing these feelings of success.',
-    ),
-    DiaryEntry(
-      emoji: '😐',
-      title: 'A bit stressed',
-      dateTime: DateTime.parse('2025-10-08T09:00:00Z'),
-      analysis:
-          'Work stress seems to be a recurring theme. You noted feeling overwhelmed by deadlines. It might be helpful to break down tasks into smaller, more manageable steps to reduce anxiety.',
-    ),
-    DiaryEntry(
-      emoji: '😌',
-      title: 'Feeling Calm',
-      dateTime: DateTime.parse('2025-10-07T20:15:00Z'),
-      analysis:
-          'Your evening walk brought a sense of peace. Describing the sunset and cool breeze indicates a connection with nature, which is a great coping mechanism for stress. Consider making this a regular habit.',
-    ),
-    DiaryEntry(
-      emoji: '😊',
-      title: 'Lunch with a friend',
-      dateTime: DateTime.parse('2025-10-06T13:00:00Z'),
-      analysis:
-          'Social interaction had a very positive impact. You described laughing and feeling connected. Spending time with loved ones is a powerful mood booster that strengthens your support system.',
-    ),
-  ];
+  @override
+  State<DailyDairiesPage> createState() => _DailyDairiesPageState();
+}
+
+class _DailyDairiesPageState extends State<DailyDairiesPage> {
+  final _storageService = DiaryStorageService();
+  late Future<List<DiaryEntry>> _diariesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDiaries();
+  }
+
+  void _loadDiaries() {
+    setState(() {
+      _diariesFuture = _storageService.getDiaries();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Diaries'),
-        // The back button is automatically added by Flutter's Navigator
-      ),
-      body: ListView.builder(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _diaryEntries.length,
-        itemBuilder: (context, index) {
-          final entry = _diaryEntries[index];
-          // Use the index to alternate the layout
-          return DiaryEntryCard(
-            entry: entry,
-            isReversed: index.isOdd, // index 1, 3, 5... will be reversed
+      appBar: AppBar(title: const Text('Daily Diaries')),
+      body: FutureBuilder<List<DiaryEntry>>(
+        future: _diariesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text(
+                'You haven\'t written any diary entries yet.',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
+          final diaryEntries = snapshot.data!;
+          return ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            physics: const BouncingScrollPhysics(),
+            itemCount: diaryEntries.length,
+            itemBuilder: (context, index) {
+              return DiaryEntryCard(
+                entry: diaryEntries[index],
+                isReversed: index.isOdd,
+              );
+            },
           );
         },
       ),
