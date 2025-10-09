@@ -1,7 +1,7 @@
 import 'package:me_mpr/screens/home_page.dart';
 import 'package:me_mpr/screens/login_page.dart';
 import 'package:me_mpr/services/auth_service.dart';
-import 'package:me_mpr/utils.dart';
+import 'package:me_mpr/utils/utils.dart';
 import 'package:me_mpr/widgets/custom_text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:me_mpr/utils/app_colors.dart';
 import 'package:me_mpr/screens/home_page.dart';
 import 'package:me_mpr/screens/login_page.dart';
 
@@ -13,11 +14,12 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         // 🔄 Show loading while waiting for Firebase
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color(0xFFF1F8E9), // Light yellow background
+          return Scaffold(
             body: Center(
               child: CircularProgressIndicator(
-                color: Color(0xFFFFC107), // Yellow loader
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondary, // Uses yellow from theme
               ),
             ),
           );
@@ -27,14 +29,13 @@ class AuthGate extends StatelessWidget {
         if (snapshot.hasData) {
           return const HomePage();
         }
-
         // ❌ If user not logged in, go to LoginPage
         else if (snapshot.hasError) {
           return const Scaffold(
             body: Center(
               child: Text(
                 'Something went wrong. Please restart the app.',
-                style: TextStyle(fontSize: 16, color: Colors.red),
+                style: TextStyle(fontSize: 16, color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
