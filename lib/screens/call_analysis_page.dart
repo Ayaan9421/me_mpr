@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:me_mpr/utils/utils.dart';
 import 'package:me_mpr/widgets/calls/call_analysis_card.dart';
 import 'package:me_mpr/widgets/main_bottom_nav_bar.dart';
 import 'home_page.dart';
@@ -17,17 +18,23 @@ class _CallAnalysisPageState extends State<CallAnalysisPage> {
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } else if (index == 1) {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const DailyDairiesPage()),
       );
     } else if (index == 2) {
-      // Already on this page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
+      );
+    } else if (index == 3) {
+      // Profile or Settings Page
+      showSnackBar(context, "SOS coming soon!");
     } else {
       setState(() => _selectedIndex = index);
     }

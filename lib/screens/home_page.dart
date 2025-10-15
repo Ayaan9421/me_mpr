@@ -7,6 +7,7 @@ import 'package:me_mpr/screens/create_diary_page.dart';
 import 'package:me_mpr/screens/daily_diaries_page.dart';
 import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/app_colors.dart';
+import 'package:me_mpr/utils/utils.dart';
 import 'package:me_mpr/widgets/home/home_section_header.dart';
 import 'package:me_mpr/widgets/home/mood_tracker_card.dart';
 import 'package:me_mpr/widgets/home/recent_calls_section.dart';
@@ -38,18 +39,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 1) {
+    if (index == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const DailyDairiesPage()),
-      ).then((_) => _refreshDiaries());
+      );
     } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
       );
     } else if (index == 3) {
-      // Placeholder for SOS/Therapy page
+      // Profile or Settings Page
+      showSnackBar(context, "SOS coming soon!");
     } else {
       setState(() => _selectedIndex = index);
     }
@@ -134,7 +141,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.analytics_outlined),
+            leading: const Icon(Icons.call_outlined),
             title: const Text('Call Analysis'),
             onTap: () {
               Navigator.pop(context);
@@ -200,7 +207,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         Positioned(
-          bottom: 40,
+          bottom: 20,
           right: 16,
           child: FloatingActionButton(
             heroTag: 'chat_fab',

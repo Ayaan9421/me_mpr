@@ -22,7 +22,7 @@ class MainBottomNavBar extends StatelessWidget {
       ],
       activeIndex: selectedIndex,
       gapLocation: GapLocation.center,
-      notchSmoothness: NotchSmoothness.smoothEdge,
+      notchSmoothness: NotchSmoothness.softEdge,
       leftCornerRadius: 32,
       rightCornerRadius: 32,
       onTap: onItemTapped,
