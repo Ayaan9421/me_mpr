@@ -262,7 +262,7 @@ class _CreateDiaryPageState extends State<CreateDiaryPage> {
             title: 'Helpful Advice',
             items: report.advice,
             icon: Icons.lightbulb_outline_rounded,
-            iconColor: AppColors.moodGood,
+            iconColor: AppColors.success,
           ),
         ],
       ),

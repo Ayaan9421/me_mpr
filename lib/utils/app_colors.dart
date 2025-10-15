@@ -1,29 +1,44 @@
 import 'package:flutter/material.dart';
 
-/// A class to hold the custom color palette for the app.
+/// A class to hold the modernized, calming color palette for the app.
 class AppColors {
-  // Main Palette
-  static const Color primaryBlue = Color(0xFFB3E5FC); // Light blue for app bars
-  static const Color background = Color(
-    0xFFF1F8E9,
-  ); // Light, calming green/yellow
-  static const Color accentYellow = Color(
-    0xFFFFC107,
-  ); // Bright yellow for FABs and accents
+  // --- Primary Palette ---
+  /// A calm, trustworthy blue. The main brand color.
+  static const Color primary = Color(0xFF3B82F6);
 
-  // Component Colors
+  /// A slightly darker blue for hover/pressed states.
+  static const Color primaryDark = Color(0xFF2563EB);
+
+  /// The main background color. A very light, soft grey-blue.
+  static const Color background = Color(0xFFF3F6FB);
+
+  // --- Accent Palette ---
+  /// A warm, gentle peach for positive accents and highlights.
+  static const Color accent = Color(0xFFFFA781);
+
+  /// A soft, encouraging yellow for secondary accents.
+  static const Color accentYellow = Color(0xFFFFD073);
+
+  // --- Component & Text Colors ---
+  /// The default background for cards and surfaces.
   static const Color cardBackground = Colors.white;
-  static const Color primaryAccent = Color(
-    0xFF009688,
-  ); // Teal for primary actions
 
-  // Text Colors
-  static const Color primaryText = Colors.black87;
-  static const Color secondaryText = Colors.grey;
+  /// The primary color for text. A dark, readable charcoal.
+  static const Color primaryText = Color(0xFF1F2937);
 
-  // Mood & Status Colors
-  static const Color moodGood = Color(
-    0xFFA5D6A7,
-  ); // Light green for positive moods
-  static const Color error = Colors.redAccent;
+  /// A softer grey for subtitles and secondary information.
+  static const Color secondaryText = Color(0xFF6B7280);
+
+  /// The color for borders and dividers.
+  static const Color border = Color(0xFFE5E7EB);
+
+  // --- Status & Mood Colors ---
+  /// A gentle green for success messages and positive moods.
+  static const Color success = Color(0xFF34D399);
+
+  /// A soft, muted red for error states and warnings.
+  static const Color error = Color(0xFFF87171);
+
+  /// A gentle amber for informational alerts or warnings.
+  static const Color warning = Color(0xFFFBBF24);
 }

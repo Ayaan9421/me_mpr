@@ -107,7 +107,7 @@ class DiaryDetailPage extends StatelessWidget {
                 title: 'Helpful Advice',
                 items: entry.report!.advice,
                 icon: Icons.lightbulb_outline_rounded,
-                iconColor: AppColors.moodGood,
+                iconColor: AppColors.success,
               ),
             ] else ...[
               const Center(

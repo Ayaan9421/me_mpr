@@ -29,64 +29,59 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Inter', // A clean, modern font choice
         scaffoldBackgroundColor: AppColors.background,
-        fontFamily: 'Inter', // A clean, friendly font
-        // Define the color scheme
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primaryBlue,
+        colorScheme: const ColorScheme.light(
+          primary: AppColors.primary,
+          secondary: AppColors.accent,
           background: AppColors.background,
-          primary: AppColors.primaryAccent,
-          secondary: AppColors.accentYellow,
+          surface: AppColors.cardBackground,
+          error: AppColors.error,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onBackground: AppColors.primaryText,
+          onSurface: AppColors.primaryText,
+          onError: Colors.white,
         ),
-
-        // AppBar Theme
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.cardBackground,
+          backgroundColor: AppColors.background,
           foregroundColor: AppColors.primaryText,
-          elevation: 2,
-          surfaceTintColor: Colors.transparent, // Prevents tint on scroll
-          centerTitle: true,
+          elevation: 0,
           titleTextStyle: TextStyle(
-            fontWeight: FontWeight.bold,
             fontSize: 20,
+            fontWeight: FontWeight.bold,
             color: AppColors.primaryText,
           ),
         ),
-
-        // Card Theme
         cardTheme: CardThemeData(
-          elevation: 3,
-          shadowColor: Colors.black12,
+          elevation: 0,
           color: AppColors.cardBackground,
-          surfaceTintColor: AppColors.cardBackground,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.border, width: 1.5),
           ),
         ),
-
-        // FAB Theme
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.accentYellow,
-          foregroundColor: Colors.white,
-          elevation: 6,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-
-        // Text Button Theme
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.primaryAccent,
+            foregroundColor: AppColors.primary,
             textStyle: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-
-        // Bottom App Bar Theme
-        bottomAppBarTheme: BottomAppBarThemeData(
-          color: AppColors.cardBackground,
-          surfaceTintColor: AppColors.cardBackground,
-          elevation: 8,
-        ),
       ),
-
       // In lib/main.dart's build method
       home: const AuthGate(), // Temporarily set this for testing
     );

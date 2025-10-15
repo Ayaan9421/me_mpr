@@ -8,6 +8,7 @@ import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/utils.dart';
 import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
 import 'package:me_mpr/widgets/dairy_entry_card.dart';
+import 'package:me_mpr/widgets/main_bottom_nav_bar.dart';
 
 class DailyDairiesPage extends StatefulWidget {
   const DailyDairiesPage({super.key});
@@ -111,6 +112,7 @@ class _DailyDairiesPageState extends State<DailyDairiesPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        shape: const CircleBorder(),
         backgroundColor: colorScheme.primary,
         onPressed: () {
           Navigator.push(
@@ -122,7 +124,7 @@ class _DailyDairiesPageState extends State<DailyDairiesPage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar: MainBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
       ),

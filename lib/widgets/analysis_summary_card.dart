@@ -12,7 +12,7 @@ class AnalysisSummaryCard extends StatelessWidget {
   });
 
   Color _getScoreColor(int score) {
-    if (score <= 3) return AppColors.moodGood;
+    if (score <= 3) return AppColors.success;
     if (score <= 6) return AppColors.accentYellow;
     return AppColors.error;
   }
