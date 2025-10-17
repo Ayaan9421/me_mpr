@@ -7,6 +7,8 @@ import 'package:me_mpr/auth/auth_gate.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
+  // TODO: let the user select the folder once, and then the next time the user opens the app it reads the file automatically... and no need to hard code the recordings directory... cause i was getting that issue...
+  // TODO: now works... just have to make that static pages dynamic and if backend integration issues... 
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Load environment variables

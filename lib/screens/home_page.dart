@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:me_mpr/failure/call_recording_model.dart';
 import 'package:me_mpr/failure/diary_entry.dart';
 import 'package:me_mpr/screens/call_analysis_page.dart';
 import 'package:me_mpr/screens/chat_screen.dart';
 import 'package:me_mpr/screens/create_diary_page.dart';
 import 'package:me_mpr/screens/daily_diaries_page.dart';
+import 'package:me_mpr/services/call_analysis_queue_service.dart';
+import 'package:me_mpr/services/call_finder_service.dart';
 import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 import 'package:me_mpr/utils/utils.dart';
+import 'package:me_mpr/widgets/calls/new_calls_sheet.dart';
 import 'package:me_mpr/widgets/home/home_section_header.dart';
 import 'package:me_mpr/widgets/home/mood_tracker_card.dart';
 import 'package:me_mpr/widgets/home/recent_calls_section.dart';
@@ -25,11 +29,42 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final DiaryStorageService _storageService = DiaryStorageService();
   late Future<List<DiaryEntry>> _diariesFuture;
+  final CallFinderService _callFinderService = CallFinderService();
+  final CallAnalysisQueueService _queueService = CallAnalysisQueueService();
 
   @override
   void initState() {
     super.initState();
     _diariesFuture = _storageService.getDiaries();
+    // Check for new calls shortly after the page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForNewCalls());
+  }
+
+  Future<void> _checkForNewCalls() async {
+    try {
+      final newCalls = await _callFinderService.findNewCallRecordings();
+      if (newCalls.isNotEmpty && mounted) {
+        showModalBottomSheet<List<CallRecording>>(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => NewCallsSheet(recordings: newCalls),
+        ).then((selectedCalls) {
+          if (selectedCalls != null && selectedCalls.isNotEmpty) {
+            _queueService.addCallsToQueue(selectedCalls);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Starting analysis of ${selectedCalls.length} calls in the background.',
+                ),
+              ),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      print("Failed to check for new calls: $e");
+      // Optionally show a SnackBar to the user about the error (e.g., permissions)
+    }
   }
 
   void _refreshDiaries() {

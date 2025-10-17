@@ -6,7 +6,6 @@ import 'package:me_mpr/screens/diary_detail_page.dart';
 import 'package:me_mpr/screens/home_page.dart';
 import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/utils.dart';
-import 'package:me_mpr/widgets/custom_bottom_appbar.dart';
 import 'package:me_mpr/widgets/dairy_entry_card.dart';
 import 'package:me_mpr/widgets/main_bottom_nav_bar.dart';
 
