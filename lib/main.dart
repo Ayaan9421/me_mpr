@@ -3,12 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 import 'package:me_mpr/auth/auth_gate.dart';
-
+import 'package:me_mpr/services/notification_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
-  // TODO: let the user select the folder once, and then the next time the user opens the app it reads the file automatically... and no need to hard code the recordings directory... cause i was getting that issue...
-  // TODO: now works... just have to make that static pages dynamic and if backend integration issues... 
+  // TODO: remove the loading page for the journals page and add notifs for analysis completion
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Load environment variables
@@ -17,6 +16,7 @@ Future<void> main() async {
   // ✅ Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  await NotificationService().init();
   // ✅ Run app
   runApp(const MyApp());
 }

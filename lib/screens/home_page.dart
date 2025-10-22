@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:me_mpr/failure/call_analysis_model.dart';
 import 'package:me_mpr/failure/call_recording_model.dart';
 import 'package:me_mpr/failure/diary_entry.dart';
 import 'package:me_mpr/screens/call_analysis_page.dart';
@@ -8,6 +9,7 @@ import 'package:me_mpr/screens/create_diary_page.dart';
 import 'package:me_mpr/screens/daily_diaries_page.dart';
 import 'package:me_mpr/services/call_analysis_queue_service.dart';
 import 'package:me_mpr/services/call_finder_service.dart';
+import 'package:me_mpr/services/call_storage_service.dart';
 import 'package:me_mpr/services/diary_storage_service.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 import 'package:me_mpr/utils/utils.dart';
@@ -31,13 +33,47 @@ class _HomePageState extends State<HomePage> {
   late Future<List<DiaryEntry>> _diariesFuture;
   final CallFinderService _callFinderService = CallFinderService();
   final CallAnalysisQueueService _queueService = CallAnalysisQueueService();
+  final CallStorageService _callStorageService = CallStorageService();
+  late Future<List<CallAnalysis>> _callAnalysesFuture;
+  final user =
+      FirebaseAuth.instance.currentUser!.displayName ??
+      FirebaseAuth.instance.currentUser!.email ??
+      'User';
 
   @override
   void initState() {
     super.initState();
     _diariesFuture = _storageService.getDiaries();
+    _refreshAllData();
     // Check for new calls shortly after the page loads
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkForNewCalls());
+  }
+
+  Future<void> _refreshAllData() async {
+    // Use Future.wait to run both refresh operations concurrently
+    await Future.wait([
+      _storageService.getDiaries(),
+      _callStorageService.getAllAnalyses(),
+    ]);
+    // Trigger rebuild after both futures complete
+    if (mounted) {
+      setState(() {
+        _diariesFuture = _storageService.getDiaries();
+        _callAnalysesFuture = _callStorageService.getAllAnalyses();
+      });
+    }
+  }
+
+  void _refreshDiaries() {
+    setState(() {
+      _diariesFuture = _storageService.getDiaries();
+    });
+  }
+
+  void _refreshCalls() {
+    setState(() {
+      _callAnalysesFuture = _callStorageService.getAllAnalyses();
+    });
   }
 
   Future<void> _checkForNewCalls() async {
@@ -58,19 +94,54 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             );
+            Future.delayed(const Duration(seconds: 1), _refreshAllData);
           }
         });
       }
+    } on DirectoryNotSetException {
+      // Directory not set, optionally prompt the user to select one
+      if (mounted) {
+        await _promptForDirectory();
+      }
     } catch (e) {
       print("Failed to check for new calls: $e");
-      // Optionally show a SnackBar to the user about the error (e.g., permissions)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not check for calls: ${e.toString()}')),
+        );
+      }
     }
   }
 
-  void _refreshDiaries() {
-    setState(() {
-      _diariesFuture = _storageService.getDiaries();
-    });
+  Future<void> _promptForDirectory() async {
+    final didSelect = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // User must make a choice
+      builder: (context) => AlertDialog(
+        title: const Text('Select Call Recording Folder'),
+        content: const Text(
+          'To automatically find new calls, please select the folder where your phone saves call recordings. This is a one-time setup.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Later'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await _callFinderService.selectAndSaveDirectory();
+              if (mounted) Navigator.of(context).pop(success);
+            },
+            child: const Text('Select Folder'),
+          ),
+        ],
+      ),
+    );
+
+    // If they successfully selected a folder, immediately try checking again.
+    if (didSelect == true) {
+      _checkForNewCalls();
+    }
   }
 
   void _onItemTapped(int index) {
@@ -78,17 +149,17 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+      ).then((_) => _refreshAllData());
     } else if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const DailyDairiesPage()),
-      );
+      ).then((_) => _refreshAllData());
     } else if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CallAnalysisPage()),
-      );
+      ).then((_) => _refreshAllData());
     } else if (index == 3) {
       // Profile or Settings Page
       showSnackBar(context, "SOS coming soon!");
@@ -157,7 +228,7 @@ class _HomePageState extends State<HomePage> {
       width: MediaQuery.of(context).size.width * 0.75,
       child: Column(
         children: [
-          const UserAccountsDrawerHeader(
+          UserAccountsDrawerHeader(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF7BDCB5), Color(0xFF4F8EF7)],
@@ -169,7 +240,7 @@ class _HomePageState extends State<HomePage> {
               'MindEase User',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-            accountEmail: Text('user@example.com'),
+            accountEmail: Text(user.toString()),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Icon(Icons.person, color: Colors.black54, size: 36),
@@ -185,7 +256,7 @@ class _HomePageState extends State<HomePage> {
                 MaterialPageRoute(
                   builder: (context) => const CallAnalysisPage(),
                 ),
-              );
+              ).then((_) => _refreshCalls());
             },
           ),
           ListTile(
@@ -218,26 +289,35 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBody() {
     return Stack(
       children: [
-        SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const MoodTrackerCard(),
-                const SizedBox(height: 28),
-                const HomeSectionHeader(title: '✨ Daily Diaries'),
-                const SizedBox(height: 12),
-                RecentDiariesSection(
-                  diariesFuture: _diariesFuture,
-                  onRefresh: _refreshDiaries,
-                ),
-                const SizedBox(height: 20),
-                const HomeSectionHeader(title: '📞 Recent Calls'),
-                const SizedBox(height: 12),
-                const RecentCallsSection(),
-              ],
+        RefreshIndicator(
+          onRefresh: () => _refreshAllData(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              // Ensures scroll even if content fits screen
+              parent: BouncingScrollPhysics(),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const MoodTrackerCard(),
+                  const SizedBox(height: 28),
+                  const HomeSectionHeader(title: '✨ Daily Diaries'),
+                  const SizedBox(height: 12),
+                  RecentDiariesSection(
+                    diariesFuture: _diariesFuture,
+                    onRefresh: _refreshDiaries,
+                  ),
+                  const SizedBox(height: 20),
+                  const HomeSectionHeader(title: '📞 Recent Calls'),
+                  const SizedBox(height: 12),
+                  RecentCallsSection(
+                    analysesFuture: _callAnalysesFuture,
+                    onRefresh: _refreshCalls,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -269,7 +349,7 @@ class _HomePageState extends State<HomePage> {
           MaterialPageRoute(builder: (context) => const CreateDiaryPage()),
         );
         if (result == true && mounted) {
-          _refreshDiaries();
+          _refreshAllData();
         }
       },
       child: const Icon(Icons.add, color: Colors.white, size: 30),

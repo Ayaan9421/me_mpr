@@ -30,4 +30,16 @@ class CallStorageService {
         .toList();
     await prefs.setString(_storageKey, json.encode(jsonList));
   }
+
+  Future<void> deleteCall(String fileNameToDelete) async {
+    final prefs = await SharedPreferences.getInstance();
+    final analyses = await getAllAnalyses();
+
+    analyses.removeWhere((analysis) => analysis.fileName == fileNameToDelete);
+
+    await prefs.setString(
+      _storageKey,
+      json.encode(analyses.map((a) => a.toJson()).toList()),
+    );
+  }
 }

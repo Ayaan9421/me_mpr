@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:me_mpr/failure/depression_report.dart';
+import 'package:me_mpr/failure/emotion_detail.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 
 class EmotionBarChart extends StatelessWidget {

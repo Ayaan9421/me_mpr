@@ -1,40 +1,50 @@
+import 'dart:convert';
 import 'package:me_mpr/failure/diary_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DiaryStorageService {
-  static const _diariesKey = 'saved_diaries';
+  static const _storageKey = 'diary_entries';
 
-  // Saves a new diary entry by adding it to the existing list
-  Future<void> saveDiary(DiaryEntry entry) async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<DiaryEntry> diaries = await getDiaries();
-
-    // Add the new entry and sort by date (newest first)
-    diaries.add(entry);
-    diaries.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-
-    final String encodedData = diaryEntryToJson(diaries);
-    await prefs.setString(_diariesKey, encodedData);
-  }
-
-  // Retrieves and decodes the list of all saved diary entries
   Future<List<DiaryEntry>> getDiaries() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? diariesString = prefs.getString(_diariesKey);
-    if (diariesString != null && diariesString.isNotEmpty) {
-      return diaryEntryFromJson(diariesString);
+    final String? diariesString = prefs.getString(_storageKey);
+    if (diariesString == null) return [];
+
+    try {
+      final List<dynamic> jsonList = jsonDecode(diariesString);
+      List<DiaryEntry> entries = jsonList
+          .map((json) => DiaryEntry.fromJson(json as Map<String, dynamic>))
+          .toList();
+      // Sort by date, newest first
+      entries.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+      return entries;
+    } catch (e) {
+      print("Error decoding diaries: $e");
+      await prefs.remove(_storageKey); // Clear corrupted data
+      return [];
     }
-    return [];
   }
 
-  Future<void> deleteDiary(DateTime diaryId) async {
+  Future<void> saveDiary(DiaryEntry newEntry) async {
+    final diaries = await getDiaries();
+    // --- FIX: Update logic ---
+    // Remove existing entry with the same timestamp before adding the new/updated one
+    diaries.removeWhere((entry) => entry.dateTime == newEntry.dateTime);
+    diaries.add(newEntry);
+    await _persistDiaries(diaries);
+  }
+
+  Future<void> deleteDiary(DateTime dateTime) async {
+    final diaries = await getDiaries();
+    diaries.removeWhere((entry) => entry.dateTime == dateTime);
+    await _persistDiaries(diaries);
+  }
+
+  Future<void> _persistDiaries(List<DiaryEntry> diaries) async {
     final prefs = await SharedPreferences.getInstance();
-    final List<DiaryEntry> diaries = await getDiaries();
-
-    // Remove the diary that matches the unique dateTime
-    diaries.removeWhere((entry) => entry.dateTime == diaryId);
-
-    // Save the updated list
-    await prefs.setString(_diariesKey, diaryEntryToJson(diaries));
+    List<Map<String, dynamic>> jsonList = diaries
+        .map((e) => e.toJson())
+        .toList();
+    await prefs.setString(_storageKey, jsonEncode(jsonList));
   }
 }

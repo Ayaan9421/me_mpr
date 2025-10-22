@@ -44,7 +44,7 @@ class MoodTrackerCard extends StatelessWidget {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'You’re on a 5-day streak! Keep going 💪',
+                'You’re on a 7-day streak! Keep going 💪',
                 style: TextStyle(color: Colors.white70, fontSize: 15),
               ),
             ),

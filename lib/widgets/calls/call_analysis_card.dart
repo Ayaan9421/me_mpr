@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:me_mpr/failure/call_analysis_report.dart';
 import 'package:me_mpr/screens/call_detail_page.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 
@@ -6,14 +7,15 @@ class CallAnalysisCard extends StatelessWidget {
   final String caller;
   final String date;
   final String duration;
-  final Map<String, dynamic> analysisData;
+  // --- FIX: Changed the type from Map to DepressionReport ---
+  final CallAnalysisReport analysisReport;
 
   const CallAnalysisCard({
     super.key,
     required this.caller,
     required this.date,
     required this.duration,
-    required this.analysisData,
+    required this.analysisReport,
   });
 
   @override
@@ -49,7 +51,8 @@ class CallAnalysisCard extends StatelessWidget {
                         caller: caller,
                         date: date,
                         duration: duration,
-                        analysisData: analysisData,
+                        // --- FIX: Passed the correct object with the correct name ---
+                        analysisReport: analysisReport,
                       ),
                     ),
                   );

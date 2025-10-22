@@ -2,21 +2,21 @@ import 'dart:convert';
 
 import 'package:me_mpr/failure/emotion_detail.dart';
 
-DepressionReport depressionReportFromJson(String str) {
+CallAnalysisReport depressionReportFromJson(String str) {
   final jsonData = json.decode(str);
-  return DepressionReport.fromJson(jsonData);
+  return CallAnalysisReport.fromJson(jsonData);
 }
 
-class DepressionReport {
-  final String? transcript;
+class CallAnalysisReport {
+  final String? summary;
   final int depressionScore;
   final String description;
   final List<String> risks;
   final List<String> advice;
   final List<EmotionDetail> emotions;
 
-  DepressionReport({
-    this.transcript,
+  CallAnalysisReport({
+    this.summary,
     required this.depressionScore,
     required this.description,
     required this.risks,
@@ -24,9 +24,9 @@ class DepressionReport {
     required this.emotions,
   });
 
-  factory DepressionReport.fromJson(Map<String, dynamic> json) {
-    return DepressionReport(
-      transcript: json["transcript"],
+  factory CallAnalysisReport.fromJson(Map<String, dynamic> json) {
+    return CallAnalysisReport(
+      summary: json["summary"],
       depressionScore: json["depression_score"],
       description: json["description"],
       risks: (json["risks"] as List?)?.map((x) => x.toString()).toList() ?? [],
@@ -41,7 +41,7 @@ class DepressionReport {
   }
 
   Map<String, dynamic> toJson() => {
-    "transcript": transcript,
+    "summary": summary,
     "depression_score": depressionScore,
     "description": description,
     "risks": risks,
