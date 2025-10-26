@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:me_mpr/failure/call_analysis_report.dart';
-import 'package:me_mpr/screens/call_detail_page.dart';
+import 'package:me_mpr/models/call_analysis_report.dart';
+import 'package:me_mpr/screens/Calls/call_detail_page.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 
 class CallAnalysisCard extends StatelessWidget {

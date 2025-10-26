@@ -55,8 +55,25 @@ dependencies:
   just_audio: ^0.10.5
   flutter_local_notifications: ^19.5.0
   fluttertoast: ^9.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  geolocator: ^14.0.2
+  url_launcher: ^6.3.2
+  animated_text_kit: ^4.3.0
+  uuid: ^4.5.1
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  remove_alpha_ios: true
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
 
 dev_dependencies:
+  flutter_native_splash: ^2.4.0
   flutter_test:
     sdk: flutter
 
@@ -69,6 +86,12 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_native_splash:
+  color: "#FFFFFF" # background color of splash
+  image: assets/icon/app_icon.png
+  android: true
+  ios: true
 
 # The following section is specific to Flutter packages.
 flutter:

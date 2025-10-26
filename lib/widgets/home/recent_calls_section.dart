@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:me_mpr/failure/call_analysis_model.dart';
-import 'package:me_mpr/screens/call_analysis_page.dart';
-import 'package:me_mpr/screens/call_detail_page.dart';
+import 'package:me_mpr/models/call_analysis_model.dart';
+import 'package:me_mpr/screens/Calls/call_analysis_page.dart';
+import 'package:me_mpr/screens/Calls/call_detail_page.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 
 class RecentCallsSection extends StatelessWidget {
@@ -19,6 +19,14 @@ class RecentCallsSection extends StatelessWidget {
     if (score <= 3) return '😊';
     if (score <= 6) return '😐';
     return '😔';
+  }
+
+  String _formatDuration(int totalSeconds) {
+    if (totalSeconds <= 0) return '';
+    final duration = Duration(seconds: totalSeconds);
+    final minutes = duration.inMinutes.remainder(60).toString();
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds min';
   }
 
   @override
@@ -77,24 +85,42 @@ class RecentCallsSection extends StatelessWidget {
   }
 
   Widget _buildCallEntry(BuildContext context, CallAnalysis analysis) {
+    final bool isProcessing = analysis.isProcessing;
+    final String displayEmoji = isProcessing
+        ? '⏳'
+        : _getEmojiForScore(
+            analysis.report?.depressionScore ?? 5,
+          ); // Default emoji if report is somehow null
+
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CallDetailPage(
-              caller: analysis.fileName,
-              date: DateFormat('MMM dd, yyyy').format(analysis.callDate),
-              duration: '${analysis.durationInSeconds.toString()} seconds',
-              analysisReport: analysis.report,
+        if (analysis.report != null) {
+          // Only navigate if report exists
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CallDetailPage(
+                caller: analysis.fileName,
+                date: DateFormat('MMM dd, yyyy').format(analysis.callDate),
+                duration: _formatDuration(analysis.durationInSeconds),
+                analysisReport:
+                    analysis.report!, // We know report is not null here
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          // Handle case where it finished processing but failed (report is null)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Analysis failed for this call.')),
+          );
+        }
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isProcessing
+              ? Colors.grey.shade100
+              : Colors.white, // Lighter background if processing
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -106,24 +132,40 @@ class RecentCallsSection extends StatelessWidget {
         ),
         child: ListTile(
           leading: Text(
-            _getEmojiForScore(analysis.report.depressionScore),
+            displayEmoji, // Use the determined emoji
             style: const TextStyle(fontSize: 30),
           ),
           title: Text(
             analysis.fileName,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: isProcessing
+                  ? AppColors.secondaryText
+                  : AppColors.primaryText, // Dim text if processing
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            DateFormat('MMM dd, h:mm a').format(analysis.callDate),
+            // Show "Processing..." instead of date/duration if processing
+            isProcessing
+                ? 'Analysis in progress...'
+                : '${DateFormat('MMM dd, h:mm a').format(analysis.callDate)}  •  ${_formatDuration(analysis.durationInSeconds)}',
             style: const TextStyle(color: Colors.grey),
           ),
-          trailing: const Icon(
-            Icons.chevron_right_rounded,
-            color: Colors.grey,
-            size: 26,
-          ),
+          trailing: isProcessing
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(
+                  // Show spinner if processing
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey,
+                  size: 26,
+                ),
         ),
       ),
     );

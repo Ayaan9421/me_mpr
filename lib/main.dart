@@ -7,7 +7,9 @@ import 'package:me_mpr/services/notification_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
-  // TODO: remove the loading page for the journals page and add notifs for analysis completion
+  // TODO: show the average mood score in the mood tracker card on the home page
+  // TODO: Track the streak of the user's diary entries and display it in the mood tracker card.
+  // TODO: complete SOS page...
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Load environment variables

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:me_mpr/failure/call_recording_model.dart';
+import 'package:me_mpr/models/call_recording_model.dart';
 import 'package:me_mpr/utils/app_colors.dart';
 
 class UnanalyzedCallsSheet extends StatefulWidget {
